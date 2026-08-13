@@ -270,18 +270,40 @@ function App() {
   const totalDuration = route ? Math.round(route.duration / 60) : Math.round(plan.reduce((sum,p) => sum + p.dwell, 0) + Number(totalDistance) * (mode === 'driving' ? 2 : mode === 'cycling' ? 7 : 12));
 
   useEffect(() => {
-    const style = 'https://tiles.openfreemap.org/styles/dark';
-    const map = new maplibregl.Map({
+  if (!mapRef.current) return;
+
+  let map;
+
+  try {
+    map = new maplibregl.Map({
       container: mapRef.current,
-      style,
+      style: 'https://tiles.openfreemap.org/styles/dark',
       center: [location.lon, location.lat],
       zoom: 12.2,
       attributionControl: false,
     });
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+    map.addControl(
+      new maplibregl.NavigationControl({ showCompass: false }),
+      'top-right'
+    );
+
     mapInstance.current = map;
-    return () => map.remove();
-  }, []);
+  } catch (error) {
+    console.error('Map failed to initialize:', error);
+    mapInstance.current = null;
+    setMessage('Map could not load, but the planner is still available.');
+  }
+
+  return () => {
+    if (map) {
+      try {
+        map.remove();
+      } catch {}
+    }
+    mapInstance.current = null;
+  };
+}, []);
 
   useEffect(() => {
     const map = mapInstance.current;
