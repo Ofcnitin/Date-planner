@@ -191,7 +191,15 @@ async function searchPlaces(lat, lon, radius, interests) {
       address: [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' '),
     };
   }).filter(Boolean);
-  return dedupePlaces(results);
+
+const enrichedResults = await Promise.all(
+  results.map(async (place) => ({
+    ...place,
+    info: await getPlaceInfo(place)
+  }))
+);
+
+return dedupePlaces(enrichedResults);
 }
 
 function dedupePlaces(places) {
