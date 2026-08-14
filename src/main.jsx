@@ -552,4 +552,30 @@ function App() {
   );
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+window.addEventListener('error', (event) => {
+  document.body.innerHTML = `
+    <pre style="
+      white-space:pre-wrap;
+      padding:20px;
+      color:#ff8080;
+      background:#060609;
+      font-family:monospace;
+      font-size:14px;
+    ">${event.error?.stack || event.message}</pre>
+  `;
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  document.body.innerHTML = `
+    <pre style="
+      white-space:pre-wrap;
+      padding:20px;
+      color:#ff8080;
+      background:#060609;
+      font-family:monospace;
+      font-size:14px;
+    ">${event.reason?.stack || event.reason}</pre>
+  `;
+});
+
+createRoot(document.getElementById('root')).render(<App />); 
