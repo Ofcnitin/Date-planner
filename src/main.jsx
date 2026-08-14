@@ -306,32 +306,91 @@ function App() {
 }, []);
 
   useEffect(() => {
-    const map = mapInstance.current;
-    if (!map) return;
-    map.flyTo({ center: [location.lon, location.lat], zoom: 12.4, duration: 900 });
-    if (plan.length) {
-      const points = plan.map(p => [p.lon,p.lat]);
-      const all = [[location.lon,location.lat], ...points];
-      const lons = all.map(p=>p[0]), lats=all.map(p=>p[1]);
-      map.fitBounds([[Math.min(...lons)-0.01, Math.min(...lats)-0.01],[Math.max(...lons)+0.01, Math.max(...lats)+0.01]], { padding: 70, duration: 900 });
+  const map = mapInstance.current;
+  if (!map) return;
+
+  const updateMap = () => {
+    try {
+      map.flyTo({
+        center: [location.lon, location.lat],
+        zoom: 12.4,
+        duration: 900,
+      });
+
+      if (plan.length) {
+        const points = plan.map(p => [p.lon, p.lat]);
+        const all = [[location.lon, location.lat], ...points];
+
+        const lons = all.map(p => p[0]);
+        const lats = all.map(p => p[1]);
+
+        map.fitBounds(
+          [
+            [Math.min(...lons) - 0.01, Math.min(...lats) - 0.01],
+            [Math.max(...lons) + 0.01, Math.max(...lats) + 0.01],
+          ],
+          { padding: 70, duration: 900 }
+        );
+      }
+
+      if (map.getLayer('plan-route')) {
+        map.removeLayer('plan-route');
+      }
+
+      if (map.getSource('plan-route')) {
+        map.removeSource('plan-route');
+      }
+
+      if (route?.geometry) {
+        map.addSource('plan-route', {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            geometry: route.geometry,
+          },
+        });
+
+        map.addLayer({
+          id: 'plan-route',
+          type: 'line',
+          source: 'plan-route',
+          paint: {
+            'line-color': '#9edfff',
+            'line-width': 5,
+            'line-opacity': 0.9,
+          },
+        });
+      }
+
+      map.markers?.forEach(m => m.remove());
+      map.markers = [];
+
+      plan.forEach((p, idx) => {
+        const el = document.createElement('button');
+        el.className = 'map-marker';
+        el.textContent = idx + 1;
+
+        el.addEventListener('click', () => {
+          setSelectedPlace(p);
+        });
+
+        const marker = new maplibregl.Marker({ element: el })
+          .setLngLat([p.lon, p.lat])
+          .addTo(map);
+
+        map.markers.push(marker);
+      });
+    } catch (error) {
+      console.error('Map update failed:', error);
     }
-    if (map.getSource('plan-route')) map.removeLayer('plan-route');
-    if (map.getSource('plan-route')) map.removeSource('plan-route');
-    if (route?.geometry) {
-      map.addSource('plan-route',{type:'geojson',data:{type:'Feature',geometry:route.geometry}});
-      map.addLayer({id:'plan-route',type:'line',source:'plan-route',paint:{'line-color':'#9edfff','line-width':5,'line-opacity':0.9}});
-    }
-    map.markers?.forEach(m => m.remove());
-    map.markers = [];
-    plan.forEach((p, idx) => {
-      const el = document.createElement('button');
-      el.className = 'map-marker';
-      el.textContent = idx + 1;
-      el.addEventListener('click', () => setSelectedPlace(p));
-      const marker = new maplibregl.Marker({element:el}).setLngLat([p.lon,p.lat]).addTo(map);
-      map.markers.push(marker);
-    });
-  }, [location, plan, route]);
+  };
+
+  if (map.isStyleLoaded()) {
+    updateMap();
+  } else {
+    map.once('load', updateMap);
+  }
+}, [location, plan, route]);
 
   useEffect(() => {
     const t = setTimeout(async () => {
