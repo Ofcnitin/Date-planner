@@ -401,7 +401,7 @@ function App() {
   }, [locationQuery, location.name]);
 
   useEffect(() => {
-    const hash = location.hash;
+    const hash = window.location.hash;
     if (!hash.startsWith('#plan=')) return;
     try {
       const decoded = JSON.parse(decodeURIComponent(hash.slice(6)));
