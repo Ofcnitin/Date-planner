@@ -9,34 +9,7 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-  (() => {
-    const originalError = console.error.bind(console);
-
-    console.error = (...args) => {
-      originalError(...args);
-
-      const error =
-        args.find(value => value instanceof Error) ||
-        args.find(value => value && value.stack);
-
-      if (!error) return;
-
-      const root = document.getElementById('root');
-
-      if (root && !root.dataset.runtimeError) {
-        root.dataset.runtimeError = '1';
-
-        const pre = document.createElement('pre');
-        pre.style.cssText =
-          'box-sizing:border-box;min-height:100vh;margin:0;padding:24px;background:#060609;color:#ff8080;white-space:pre-wrap;font:14px/1.55 monospace';
-        pre.textContent = error.stack || String(error);
-
-        root.replaceChildren(pre);
-      }
-    };
-  })();
-    </script>
+    
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
