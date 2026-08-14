@@ -81,7 +81,29 @@ async function jsonFetch(url, options = {}) {
   if (!response.ok) throw new Error(`Request failed: ${response.status}`);
   return response.json();
 }
+async function getPlaceInfo(place) {
+  try {
+    const query = encodeURIComponent(
+      `${place.name} ${place.lat} ${place.lon}`
+    );
 
+    const response = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(place.name)}`
+    );
+
+    if (!response.ok) return {};
+
+    const data = await response.json();
+
+    return {
+      description: data.extract || '',
+      image: data.thumbnail?.source || data.originalimage?.source || '',
+      wikipedia: data.content_urls?.desktop?.page || ''
+    };
+  } catch {
+    return {};
+  }
+}
 async function geocode(query) {
   const url = new URL('https://geocoding-api.open-meteo.com/v1/search');
   url.searchParams.set('name', query);
